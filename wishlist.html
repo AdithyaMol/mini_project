@@ -5,6 +5,56 @@
     <title>Wishlist - PriceComp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .wishlist-header {
+            background: linear-gradient(135deg, var(--bg-light) 0%, white 100%);
+            padding: 30px 60px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .wishlist-title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .wishlist-count {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-top: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+        }
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .empty-state h2 {
+            font-size: 24px;
+            color: var(--text-dark);
+            margin: 20px 0 10px;
+        }
+        .empty-state p {
+            color: var(--text-muted);
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+        .empty-state a {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .empty-state a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+        }
+    </style>
 </head>
 <body>
 
@@ -22,20 +72,35 @@
   {% endfor %}
 {% endwith %}
 
+<div class="wishlist-header">
+    <h1 class="wishlist-title">Wishlist</h1>
+    <p class="wishlist-count">{{ items|length }} item{{ 's' if items|length != 1 else '' }} saved</p>
+</div>
+
+{% if items %}
 <main class="product-grid">
     {% for item in items %}
         <div class="product-card">
             <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
             <h3>{{ item.product.name }}</h3>
+            <p class="vendor">{{ item.product.vendor }}</p>
             <div class="price-rating">
                 <span class="price">₹{{ item.product.price }}</span>
                 <span class="rating">⭐ {{ item.product.rating }}</span>
             </div>
-            <a href="{{ url_for('remove_from_wishlist', item_id=item.id) }}" class="btn-wishlist">❌</a>
-            <a href="#" class="btn-view">View</a>
+            <a href="{{ url_for('remove_from_wishlist', item_id=item.id) }}" class="btn-wishlist">✕</a>
+            <a href="{{ item.product.product_url }}" target="_blank" rel="noopener" class="btn-view">View</a>
         </div>
     {% endfor %}
 </main>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">🛍️</div>
+    <h2>Your wishlist is empty</h2>
+    <p>Start adding products to your wishlist to save them for later</p>
+    <a href="{{ url_for('home') }}">Browse Products</a>
+</div>
+{% endif %}
 
 </body>
 </html>
