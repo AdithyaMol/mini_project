@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Home - PriceComp</title>
+    <title>PriceComp - Find the Best Deals</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -18,6 +18,8 @@
 
 <main class="home-container">
     <div class="search-box">
+        <h1 style="color: white; margin: 0 0 20px 0; font-size: 32px; font-weight: 700;">Find the Best Deals</h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 0 0 25px 0; font-size: 16px;">Compare prices across Amazon, Flipkart, and more</p>
         <form action="{{ url_for('search') }}" method="get">
             <input type="text" name="q" placeholder="Search products..." required>
             <button type="submit" class="btn-primary">Search</button>
