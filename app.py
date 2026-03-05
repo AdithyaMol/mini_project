@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, Product, Wishlist
+import os
 
 # ---------------- LOGIN MANAGER ----------------
 login_manager = LoginManager()
@@ -18,7 +19,7 @@ def create_app():
 
     # 🔐 CONFIGURATION (HARDCODED)
     app.config["SECRET_KEY"] = "your-secret-key"  # old hardcoded key
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///pricecomp.db"  # old default SQLite
+    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:adithya25@localhost/pricecomp_db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
@@ -104,6 +105,27 @@ def create_app():
         return render_template("results.html", products=products, query=query)
 
     # ==========================================
+    # ⚖️ COMPARE PRODUCTS
+    # ==========================================
+    @app.route("/compare", methods=["POST"])
+    @login_required
+    def compare():
+        product_ids = request.form.getlist("compare")
+        print("DEBUG compare received ids:", product_ids)
+
+        if len(product_ids) < 1 or len(product_ids) > 3:
+            flash("Select 1-3 products to compare.", "error")
+            return redirect(request.referrer or url_for("home"))
+
+        products = Product.query.filter(Product.id.in_(product_ids)).all()
+
+        if len(products) != len(product_ids):
+            flash("Some products not found.", "error")
+            return redirect(request.referrer or url_for("home"))
+
+        return render_template("compare.html", products=products)
+
+    # ==========================================
     # ❤️ ADD TO WISHLIST
     # ==========================================
     @app.route("/wishlist/add/<int:product_id>")
@@ -167,6 +189,20 @@ app = create_app()
 
 with app.app_context():
     db.create_all()
+    
+    # Auto-load data if database is empty
+    from models import Product
+    if Product.query.count() == 0:
+        print("📂 Database is empty. Loading product data...")
+        try:
+            from load_data import process_file
+            process_file("amazon_products.csv", "Amazon")
+            process_file("flipkart_products.csv", "Flipkart")
+            if os.path.exists("products.csv"):
+                process_file("products.csv", "OtherVendor")
+            print("✅ Data loaded successfully!")
+        except Exception as e:
+            print(f"⚠️ Error loading data: {e}")
 
 if __name__ == "__main__":
     app.run(debug=True)
