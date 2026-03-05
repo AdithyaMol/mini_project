@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - PriceComp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="navbar">
+    <div class="logo">PriceComp</div>
+    <nav class="nav-links">
+        <a href="{{ url_for('wishlist') }}">Wishlist</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+</header>
+
+<main class="home-container">
+    <div class="search-box">
+        <form action="{{ url_for('search') }}" method="get">
+            <input type="text" name="q" placeholder="Search products..." required>
+            <button type="submit" class="btn-primary">Search</button>
+        </form>
+    </div>
+</main>
+
+</body>
+</html>

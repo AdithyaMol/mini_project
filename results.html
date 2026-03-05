@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results - PriceComp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="navbar">
+    <div class="logo">PriceComp</div>
+    <nav class="nav-links">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('wishlist') }}">Wishlist</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<main class="product-grid">
+    {% for product in products %}
+        <div class="product-card">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            <h3>{{ product.name }}</h3>
+            <div class="price-rating">
+                <span class="price">₹{{ product.price }}</span>
+                <span class="rating">⭐ {{ product.rating }}</span>
+            </div>
+            <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn-wishlist">❤</a>
+            <a href="#" class="btn-view">View</a>
+        </div>
+    {% endfor %}
+</main>
+
+</body>
+</html>
