@@ -5,6 +5,68 @@
     <title>Search Results - PriceComp</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .results-header {
+            background: linear-gradient(135deg, var(--bg-light) 0%, white 100%);
+            padding: 30px 60px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .results-title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .results-count {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-top: 8px;
+        }
+        .compare-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 60px;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #compare-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #compare-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #selection-count {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+        }
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .empty-state h2 {
+            font-size: 24px;
+            color: var(--text-dark);
+            margin: 20px 0 10px;
+        }
+        .empty-state p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
 
@@ -23,20 +85,72 @@
   {% endfor %}
 {% endwith %}
 
-<main class="product-grid">
-    {% for product in products %}
-        <div class="product-card">
-            <img src="{{ product.image_url }}" alt="{{ product.name }}">
-            <h3>{{ product.name }}</h3>
-            <div class="price-rating">
-                <span class="price">₹{{ product.price }}</span>
-                <span class="rating">⭐ {{ product.rating }}</span>
+<div class="results-header">
+    <h1 class="results-title">Search Results</h1>
+    <p class="results-count">Found {{ products|length }} product{{ 's' if products|length != 1 else '' }}</p>
+</div>
+
+{% if products %}
+<form id="compare-form" action="{{ url_for('compare') }}" method="post">
+    <div class="compare-section">
+        <button type="submit" id="compare-btn" disabled>Compare Products</button>
+        <span id="selection-count">0 selected (max 3)</span>
+    </div>
+    <main class="product-grid">
+        {% for product in products %}
+            <div class="product-card">
+                <input type="checkbox" name="compare" value="{{ product.id }}" class="compare-checkbox">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+                <p class="vendor">{{ product.vendor }}</p>
+                <div class="price-rating">
+                    <span class="price">₹{{ product.price }}</span>
+                    <span class="rating">⭐ {{ product.rating }}</span>
+                </div>
+                <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn-wishlist">♡</a>
+                <a href="{{ product.product_url }}" target="_blank" rel="noopener" class="btn-view">View</a>
             </div>
-            <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn-wishlist">❤</a>
-            <a href="#" class="btn-view">View</a>
-        </div>
-    {% endfor %}
-</main>
+        {% endfor %}
+    </main>
+</form>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">🔍</div>
+    <h2>No products found</h2>
+    <p>Try searching with different keywords or browse our categories</p>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('compare script loaded');
+    const checkboxes = document.querySelectorAll('.compare-checkbox');
+    const compareBtn = document.getElementById('compare-btn');
+    const selectionCount = document.getElementById('selection-count');
+
+    function updateSelection() {
+        const checked = document.querySelectorAll('.compare-checkbox:checked');
+        const count = checked.length;
+        console.log('checked count', count);
+        selectionCount.textContent = `${count} selected (max 3)`;
+        compareBtn.disabled = count === 0 || count > 3;
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            console.log('checkbox changed', this.value, this.checked);
+            const checked = document.querySelectorAll('.compare-checkbox:checked');
+            if (checked.length > 3) {
+                this.checked = false;
+                alert('You can select maximum 3 products to compare.');
+            }
+            updateSelection();
+        });
+    });
+
+    updateSelection();
+});
+</script>
 
 </body>
 </html>
