@@ -25,6 +25,27 @@
             <button type="submit" class="btn-primary">Search</button>
         </form>
     </div>
+
+    {% if recently_viewed %}
+    <div class="recent-products-section">
+        <h2>Recently Viewed Products</h2>
+        <div class="product-grid">
+            {% for product in recently_viewed %}
+            <div class="product-card product-card-small">
+                <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                    <h3>{{ product.name }}</h3>
+                </a>
+                <p class="vendor">{{ product.vendor }}</p>
+                <div class="price-rating">
+                    <span class="price">₹{{ product.price }}</span>
+                    <span class="rating">⭐ {{ product.rating }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </main>
 
 </body>
