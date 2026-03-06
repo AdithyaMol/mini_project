@@ -91,6 +91,56 @@
             background: var(--primary-dark);
             transform: translateY(-2px);
         }
+        .best-price {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 6px;
+            padding: 4px 8px;
+            display: inline-block;
+        }
+        .best-rating {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 6px;
+            padding: 4px 8px;
+            display: inline-block;
+        }
+        .view-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .view-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+        .recommendation-box {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 24px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.1);
+        }
+        .recommendation-box h3 {
+            color: #0ea5e9;
+            margin: 0 0 12px 0;
+            font-size: 20px;
+        }
+        .recommendation-box p {
+            color: var(--text-dark);
+            margin: 0;
+            font-size: 16px;
+        }
         @media (max-width: 768px) {
             .comparison-table {
                 font-size: 14px;
@@ -131,6 +181,7 @@
     <a href="{{ url_for('home') }}" class="back-btn">← Back to Search</a>
 </div>
 
+{% if products %}
 <table class="comparison-table">
     <thead>
         <tr>
@@ -156,13 +207,27 @@
         <tr>
             <td class="feature-cell">Price</td>
             {% for product in products %}
-            <td><span class="price">₹{{ product.price }}</span></td>
+            <td>
+                <span class="price{% if product.price == lowest_price %} best-price{% endif %}">
+                    ₹{{ product.price }}
+                    {% if product.price == lowest_price %}
+                        <br><small>⭐ Best Price</small>
+                    {% elif price_differences[product.id] > 0 %}
+                        <br><small class="price-difference">(+₹{{ price_differences[product.id] }})</small>
+                    {% endif %}
+                </span>
+            </td>
             {% endfor %}
         </tr>
         <tr>
             <td class="feature-cell">Rating</td>
             {% for product in products %}
-            <td><span class="rating">⭐ {{ product.rating }}</span></td>
+            <td>
+                <span class="rating{% if product.rating == highest_rating %} best-rating{% endif %}">
+                    ⭐ {{ product.rating }}
+                    {% if product.rating == highest_rating %}<br><small>⭐ Highest Rating</small>{% endif %}
+                </span>
+            </td>
             {% endfor %}
         </tr>
         <tr>
@@ -172,13 +237,77 @@
             {% endfor %}
         </tr>
         <tr>
-            <td class="feature-cell">Source</td>
+            <td class="feature-cell">Score</td>
             {% for product in products %}
-            <td><a href="{{ product.product_url }}" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: none;">View on {{ product.vendor }}</a></td>
+            <td>
+                <span class="{% if scores[product.id] == highest_score %}score-highlight{% endif %}">
+                    {{ scores[product.id] }}
+                    {% if scores[product.id] == highest_score %}<br><small>⭐ Best Choice</small>{% endif %}
+                </span>
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td class="feature-cell">View on Store</td>
+            {% for product in products %}
+            <td>
+                <a href="{{ product.product_url }}" target="_blank" rel="noopener" class="view-btn">
+                    View on {{ product.vendor }}
+                </a>
+            </td>
             {% endfor %}
         </tr>
     </tbody>
 </table>
+
+{% if recommended_product %}
+<div class="recommendation-box">
+    <h3>💡 Recommendation</h3>
+    <p><strong>{{ recommended_product.name }}</strong> offers the lowest price (₹{{ recommended_product.price }}) among the compared products.</p>
+</div>
+{% endif %}
+
+{% if products %}
+<div class="summary-box">
+    <h3>🏆 Comparison Summary</h3>
+    <div class="summary-grid">
+        <div class="summary-item">
+            <span class="summary-icon">🏆</span>
+            <div>
+                <strong>Best Price</strong><br>
+                {% for product in products %}
+                    {% if product.price == lowest_price %}{{ product.name }}{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="summary-item">
+            <span class="summary-icon">⭐</span>
+            <div>
+                <strong>Best Rating</strong><br>
+                {% for product in products %}
+                    {% if product.rating == highest_rating %}{{ product.name }} ({{ product.rating }}★){% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="summary-item">
+            <span class="summary-icon">💡</span>
+            <div>
+                <strong>Recommended</strong><br>
+                {{ recommended_product.name if recommended_product else 'N/A' }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <div class="empty-state-icon">⚖️</div>
+    <h2>No products to compare</h2>
+    <p>Please select at least 1 product to start comparing.</p>
+    <a href="{{ url_for('home') }}">Go Back to Search</a>
+</div>
+{% endif %}
 
 </body>
 </html>
