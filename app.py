@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, Product, Wishlist
 import os
@@ -82,7 +82,14 @@ def create_app():
     @app.route("/")
     @login_required
     def home():
-        return render_template("index.html")
+        recently_viewed = []
+        if 'recently_viewed' in session:
+            product_ids = session['recently_viewed']
+            recently_viewed = Product.query.filter(Product.id.in_(product_ids)).all()
+            # Sort by the order in session
+            recently_viewed.sort(key=lambda p: product_ids.index(p.id))
+        
+        return render_template("index.html", recently_viewed=recently_viewed)
 
     # ==========================================
     # 🔍 SEARCH → PRODUCT LISTING PAGE
@@ -91,18 +98,48 @@ def create_app():
     @login_required
     def search():
         query = request.args.get("q", "").strip()
+        sort_by = request.args.get("sort", "price_asc")
+        price_filter = request.args.get("price", "all")
+        rating_filter = request.args.get("rating", "all")
 
         if not query:
-            return render_template("results.html", products=[], query=query)
+            return render_template("results.html", products=[], query=query, sort_by=sort_by, price_filter=price_filter, rating_filter=rating_filter)
 
-        products = Product.query.filter(
-            Product.name.ilike(f"%{query}%")
-        ).order_by(Product.price.asc()).limit(50).all()
+        # Base query
+        products_query = Product.query.filter(Product.name.ilike(f"%{query}%"))
+
+        # Apply filters
+        if price_filter == "under_50000":
+            products_query = products_query.filter(Product.price < 50000)
+        elif price_filter == "50000_100000":
+            products_query = products_query.filter(Product.price.between(50000, 100000))
+        elif price_filter == "above_100000":
+            products_query = products_query.filter(Product.price >= 100000)
+
+        if rating_filter == "4_plus":
+            products_query = products_query.filter(Product.rating >= 4.0)
+        elif rating_filter == "3_plus":
+            products_query = products_query.filter(Product.rating >= 3.0)
+
+        # Apply sorting
+        if sort_by == "price_asc":
+            products_query = products_query.order_by(Product.price.asc())
+        elif sort_by == "price_desc":
+            products_query = products_query.order_by(Product.price.desc())
+        elif sort_by == "rating_desc":
+            products_query = products_query.order_by(Product.rating.desc())
+
+        products = products_query.limit(50).all()
 
         if not products:
             flash("No products found.", "info")
 
-        return render_template("results.html", products=products, query=query)
+        return render_template("results.html",
+                             products=products,
+                             query=query,
+                             sort_by=sort_by,
+                             price_filter=price_filter,
+                             rating_filter=rating_filter)
 
     # ==========================================
     # ⚖️ COMPARE PRODUCTS
@@ -123,7 +160,74 @@ def create_app():
             flash("Some products not found.", "error")
             return redirect(request.referrer or url_for("home"))
 
-        return render_template("compare.html", products=products)
+        # Calculate best values
+        if products:
+            # Find lowest price
+            lowest_price_product = min(products, key=lambda p: p.price)
+            lowest_price = lowest_price_product.price
+
+            # Find highest rating
+            highest_rating_product = max(products, key=lambda p: p.rating or 0)
+            highest_rating = highest_rating_product.rating
+
+            # Recommended product (lowest price)
+            recommended_product = lowest_price_product
+
+            # Calculate price differences
+            price_differences = {}
+            for product in products:
+                if product.price > lowest_price:
+                    price_differences[product.id] = product.price - lowest_price
+                else:
+                    price_differences[product.id] = 0
+
+            # Calculate comparison scores
+            scores = {}
+            for product in products:
+                # Score formula: (rating * 2) - (price / 10000)
+                score = (product.rating * 2) - (product.price / 10000)
+                scores[product.id] = round(score, 2)
+
+            # Find highest score
+            highest_score = max(scores.values()) if scores else 0
+        else:
+            lowest_price = None
+            highest_rating = None
+            recommended_product = None
+            price_differences = {}
+            scores = {}
+            highest_score = 0
+
+        return render_template("compare.html",
+                             products=products,
+                             lowest_price=lowest_price,
+                             highest_rating=highest_rating,
+                             recommended_product=recommended_product,
+                             price_differences=price_differences,
+                             scores=scores,
+                             highest_score=highest_score)
+
+    # ==========================================
+    # 📄 PRODUCT DETAILS
+    # ==========================================
+    @app.route("/product/<int:product_id>")
+    @login_required
+    def product_details(product_id):
+        product = Product.query.get_or_404(product_id)
+
+        # Add to recently viewed (session)
+        if 'recently_viewed' not in session:
+            session['recently_viewed'] = []
+        
+        # Remove if already exists, then add to front
+        if product_id in session['recently_viewed']:
+            session['recently_viewed'].remove(product_id)
+        session['recently_viewed'].insert(0, product_id)
+        
+        # Keep only last 5
+        session['recently_viewed'] = session['recently_viewed'][:5]
+
+        return render_template("product_details.html", product=product)
 
     # ==========================================
     # ❤️ ADD TO WISHLIST
