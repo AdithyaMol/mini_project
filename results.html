@@ -90,6 +90,42 @@
     <p class="results-count">Found {{ products|length }} product{{ 's' if products|length != 1 else '' }}</p>
 </div>
 
+<div class="filter-container">
+    <form method="get" action="{{ url_for('search') }}" id="filter-form">
+        <input type="hidden" name="q" value="{{ query }}">
+        
+        <div class="filter-group">
+            <label for="sort">Sort By:</label>
+            <select name="sort" id="sort" class="sort-dropdown">
+                <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="rating_desc" {% if sort_by == 'rating_desc' %}selected{% endif %}>Highest Rating</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="price">Price Range:</label>
+            <select name="price" id="price" class="sort-dropdown">
+                <option value="all" {% if price_filter == 'all' %}selected{% endif %}>All Prices</option>
+                <option value="under_50000" {% if price_filter == 'under_50000' %}selected{% endif %}>Under ₹50,000</option>
+                <option value="50000_100000" {% if price_filter == '50000_100000' %}selected{% endif %}>₹50,000 - ₹1,00,000</option>
+                <option value="above_100000" {% if price_filter == 'above_100000' %}selected{% endif %}>Above ₹1,00,000</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="rating">Minimum Rating:</label>
+            <select name="rating" id="rating" class="sort-dropdown">
+                <option value="all" {% if rating_filter == 'all' %}selected{% endif %}>All Ratings</option>
+                <option value="4_plus" {% if rating_filter == '4_plus' %}selected{% endif %}>4★ and above</option>
+                <option value="3_plus" {% if rating_filter == '3_plus' %}selected{% endif %}>3★ and above</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="filter-btn">Apply Filters</button>
+    </form>
+</div>
+
 {% if products %}
 <form id="compare-form" action="{{ url_for('compare') }}" method="post">
     <div class="compare-section">
@@ -100,8 +136,10 @@
         {% for product in products %}
             <div class="product-card">
                 <input type="checkbox" name="compare" value="{{ product.id }}" class="compare-checkbox">
-                <img src="{{ product.image_url }}" alt="{{ product.name }}">
-                <h3>{{ product.name }}</h3>
+                <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                    <h3>{{ product.name }}</h3>
+                </a>
                 <p class="vendor">{{ product.vendor }}</p>
                 <div class="price-rating">
                     <span class="price">₹{{ product.price }}</span>
