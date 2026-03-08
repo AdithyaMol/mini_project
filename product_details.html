@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,40 +19,64 @@
 </header>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-  {% for category, message in messages %}
-    <div class="flash {{ category }}">{{ message }}</div>
-  {% endfor %}
+{% for category, message in messages %} <div class="flash {{ category }}">{{ message }}</div>
+{% endfor %}
 {% endwith %}
 
 <div class="product-details-container">
-    <div class="product-details-grid">
-        <div class="product-image-section">
-            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-detail-image">
-        </div>
-        
-        <div class="product-info-section">
-            <h1 class="product-title">{{ product.name }}</h1>
-            
-            <div class="product-meta">
-                <div class="price-rating">
-                    <span class="price">₹{{ product.price }}</span>
-                    <span class="rating">⭐ {{ product.rating }}</span>
-                </div>
-                
-                <div class="product-details">
-                    <p><strong>Brand:</strong> {{ product.brand or 'N/A' }}</p>
-                    <p><strong>Source:</strong> {{ product.vendor }}</p>
-                </div>
-            </div>
-            
-            <div class="product-actions">
-                <a href="{{ product.product_url }}" target="_blank" rel="noopener" class="btn-primary">View on Store</a>
-                <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn-secondary">♡ Add to Wishlist</a>
-                <a href="{{ url_for('home') }}" class="btn-secondary">Compare</a>
-            </div>
-        </div>
+
+```
+<div class="product-details-grid">
+
+    <!-- PRODUCT IMAGE -->
+    <div class="product-image-section">
+        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-detail-image">
     </div>
+
+    <!-- PRODUCT INFO -->
+    <div class="product-info-section">
+
+        <h1 class="product-title">{{ product.name }}</h1>
+
+        <div class="product-meta">
+
+            <div class="price-rating">
+                <span class="price">₹{{ product.price }}</span>
+                <span class="rating">⭐ {{ product.rating }}</span>
+            </div>
+
+            <div class="product-details">
+                <p><strong>Brand:</strong> {{ product.brand or 'N/A' }}</p>
+                <p><strong>Source:</strong> {{ product.vendor }}</p>
+                <p><strong>Category:</strong> {{ product.category }}</p>
+            </div>
+
+        </div>
+
+        <div class="product-actions">
+            <a href="{{ product.product_url }}" target="_blank" rel="noopener" class="btn-primary">
+                View on {{ product.vendor }}
+            </a>
+
+            <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn-secondary">
+                ♡ Add to Wishlist
+            </a>
+
+            <a href="{{ url_for('home') }}" class="btn-secondary">
+                Compare More Products
+            </a>
+        </div>
+
+    </div>
+
 </div>
+```
+
+</div>
+
+<!-- JS -->
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 </body>
 </html>
