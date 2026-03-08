@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -17,35 +18,86 @@
 </header>
 
 <main class="home-container">
-    <div class="search-box">
-        <h1 style="color: white; margin: 0 0 20px 0; font-size: 32px; font-weight: 700;">Find the Best Deals</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 0 0 25px 0; font-size: 16px;">Compare prices across Amazon, Flipkart, and more</p>
-        <form action="{{ url_for('search') }}" method="get">
-            <input type="text" name="q" placeholder="Search products..." required>
-            <button type="submit" class="btn-primary">Search</button>
-        </form>
-    </div>
 
-    {% if recently_viewed %}
-    <div class="recent-products-section">
-        <h2>Recently Viewed Products</h2>
-        <div class="product-grid">
-            {% for product in recently_viewed %}
-            <div class="product-card product-card-small">
-                <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}">
-                    <h3>{{ product.name }}</h3>
-                </a>
-                <p class="vendor">{{ product.vendor }}</p>
-                <div class="price-rating">
-                    <span class="price">₹{{ product.price }}</span>
-                    <span class="rating">⭐ {{ product.rating }}</span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+```
+<!-- SEARCH BOX -->
+<div class="search-box">
+    <h1 style="color: white; margin: 0 0 20px 0; font-size: 32px; font-weight: 700;">Find the Best Deals</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 0 0 25px 0; font-size: 16px;">Compare prices across Amazon, Flipkart, and more</p>
+    <form action="{{ url_for('search') }}" method="get">
+        <input type="text" name="q" placeholder="Search products..." required>
+        <button type="submit" class="btn-primary">Search</button>
+    </form>
+</div>
+
+<!-- ⭐ CATEGORIES SECTION -->
+{% if categories %}
+<div class="categories-section">
+    <h2>Browse Categories</h2>
+
+    <div class="categories-grid">
+        {% for category in categories %}
+        <a href="{{ url_for('home', category=category) }}" class="category-card">
+            {{ category }}
+        </a>
+        {% endfor %}
     </div>
-    {% endif %}
+</div>
+{% endif %}
+
+
+<!-- ⭐ PRODUCTS FROM SELECTED CATEGORY -->
+{% if products %}
+<div class="recent-products-section">
+    <h2>{{ selected_category }} Products</h2>
+
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card product-card-small">
+            <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+            </a>
+
+            <p class="vendor">{{ product.vendor }}</p>
+
+            <div class="price-rating">
+                <span class="price">₹{{ product.price }}</span>
+                <span class="rating">⭐ {{ product.rating }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+
+<!-- ⭐ RECENTLY VIEWED PRODUCTS -->
+{% if recently_viewed %}
+<div class="recent-products-section">
+    <h2>Recently Viewed Products</h2>
+
+    <div class="product-grid">
+        {% for product in recently_viewed %}
+        <div class="product-card product-card-small">
+            <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+            </a>
+
+            <p class="vendor">{{ product.vendor }}</p>
+
+            <div class="price-rating">
+                <span class="price">₹{{ product.price }}</span>
+                <span class="rating">⭐ {{ product.rating }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+```
+
 </main>
 
 </body>
