@@ -1,61 +1,449 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Register - PriceComp</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<meta charset="UTF-8">
+<title>Search Results - PriceComp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+
+/* ================= RESULTS HEADER ================= */
+
+.results-header{
+background:linear-gradient(135deg,var(--bg-light) 0%,white 100%);
+padding:30px 60px;
+border-bottom:1px solid var(--border-color);
+}
+
+.results-title{
+margin:0;
+font-size:28px;
+font-weight:700;
+color:var(--text-dark);
+}
+
+.results-count{
+color:var(--text-muted);
+font-size:15px;
+margin-top:8px;
+}
+
+/* ================= PAGE LAYOUT ================= */
+
+.page-layout{
+display:flex;
+gap:30px;
+padding:30px 60px;
+}
+
+/* ================= FILTER SIDEBAR ================= */
+
+.filter-container{
+width:260px;
+background:white;
+padding:20px;
+border-radius:10px;
+border:1px solid var(--border-color);
+height:fit-content;
+position:sticky;
+top:20px;
+}
+
+.filter-group{
+display:flex;
+flex-direction:column;
+margin-bottom:18px;
+}
+
+.filter-group label{
+font-weight:600;
+margin-bottom:6px;
+font-size:14px;
+cursor:pointer;
+}
+
+.filter-group input{
+margin-right:8px;
+}
+
+.sort-dropdown{
+padding:8px;
+border-radius:6px;
+border:1px solid var(--border-color);
+}
+
+.price-input{
+padding:8px;
+border-radius:6px;
+border:1px solid var(--border-color);
+margin-bottom:6px;
+}
+
+.filter-btn{
+width:100%;
+padding:10px;
+border:none;
+border-radius:6px;
+background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+color:white;
+font-weight:600;
+cursor:pointer;
+}
+
+/* ================= PRODUCT AREA ================= */
+
+.products-area{
+flex:1;
+}
+
+/* ================= PRODUCT GRID ================= */
+
+.product-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:25px;
+}
+
+/* ================= COMPARE SECTION ================= */
+
+.compare-section{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:20px;
+margin-bottom:30px;
+}
+
+#compare-btn{
+background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+color:white;
+border:none;
+padding:12px 24px;
+border-radius:8px;
+font-weight:600;
+cursor:pointer;
+}
+
+#compare-btn:disabled{
+background:#ccc;
+cursor:not-allowed;
+}
+
+#selection-count{
+font-size:14px;
+color:var(--text-muted);
+}
+
+/* ================= EMPTY STATE ================= */
+
+.empty-state{
+text-align:center;
+padding:80px 40px;
+}
+
+.empty-state-icon{
+font-size:64px;
+margin-bottom:20px;
+}
+
+.empty-state h2{
+font-size:24px;
+color:var(--text-dark);
+margin:20px 0 10px;
+}
+
+.empty-state p{
+color:var(--text-muted);
+font-size:16px;
+}
+
+</style>
+
 </head>
-<body class="auth-split">
 
-<div class="auth-container">
+<body>
 
-    <!-- LEFT PANEL -->
-    <div class="auth-left">
-        <div class="auth-brand">
-            <h1>PriceComp</h1>
-            <p class="tagline">
-                Compare smarter.<br>
-                Shop better.<br>
-                Save more.
-            </p>
-        </div>
-        <div class="shape shape1"></div>
-        <div class="shape shape2"></div>
-        <div class="shape shape3"></div>
-    </div>
+<header class="navbar">
 
-    <!-- RIGHT PANEL -->
-    <div class="auth-right">
-        <div class="auth-card">
-            <h2>Create Account ✨</h2>
-            <p class="auth-subtitle">Join PriceComp to find the best deals.</p>
+<div class="logo">PriceComp</div>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-              {% endfor %}
-            {% endwith %}
+<nav class="nav-links">
+<a href="{{ url_for('home') }}">Home</a>
+<a href="{{ url_for('wishlist') }}">Wishlist</a>
+<a href="{{ url_for('logout') }}">Logout</a>
+</nav>
 
-            <form method="post">
-                <div class="input-group">
-                    <input type="text" name="username" placeholder="Username" required>
-                </div>
-                <div class="input-group">
-                    <input type="email" name="email" placeholder="Email address" required>
-                </div>
-                <div class="input-group">
-                    <input type="password" name="password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="auth-btn">Register</button>
-            </form>
+</header>
 
-            <p class="auth-footer">
-                Already have an account? <a href="{{ url_for('login') }}">Login here</a>
-            </p>
-        </div>
-    </div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, message in messages %}
+<div class="flash {{ category }}">{{ message }}</div>
+{% endfor %}
+{% endwith %}
+
+<div class="results-header">
+
+<h1 class="results-title">Search Results</h1>
+
+<p class="results-count">
+Found {{ products|length }} results for "<b>{{ query }}</b>"
+</p>
 
 </div>
+
+<div class="page-layout">
+
+<!-- ================= FILTER SIDEBAR ================= -->
+
+<div class="filter-container">
+
+<form method="get" action="{{ url_for('search') }}">
+
+<input type="hidden" name="q" value="{{ query }}">
+
+<!-- SORT -->
+
+<div class="filter-group">
+
+<label for="sort">Sort By</label>
+
+<select name="sort" class="sort-dropdown">
+
+<option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>
+Price: Low to High
+</option>
+
+<option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>
+Price: High to Low
+</option>
+
+<option value="rating_desc" {% if sort_by == 'rating_desc' %}selected{% endif %}>
+Highest Rating
+</option>
+
+</select>
+
+</div>
+
+<!-- PRICE RANGE -->
+
+<div class="filter-group">
+
+<label>Price Range</label>
+
+<input type="number"
+name="min_price"
+placeholder="Min ₹"
+class="price-input">
+
+<input type="number"
+name="max_price"
+placeholder="Max ₹"
+class="price-input">
+
+</div>
+
+<!-- BRAND FILTER -->
+
+<div class="filter-group">
+
+<label>Brand</label>
+
+{% for brand in brands %}
+
+<label>
+
+<input type="radio"
+name="brand"
+value="{{ brand }}"
+{% if selected_brand == brand %}checked{% endif %}>
+
+{{ brand }}
+
+</label>
+
+{% endfor %}
+
+</div>
+
+<!-- PLATFORM FILTER -->
+
+<div class="filter-group">
+
+<label>Platform</label>
+
+{% for platform in platforms %}
+
+<label>
+
+<input type="radio"
+name="platform"
+value="{{ platform }}"
+{% if selected_platform == platform %}checked{% endif %}>
+
+{{ platform }}
+
+</label>
+
+{% endfor %}
+
+</div>
+
+<!-- RATING FILTER -->
+
+<div class="filter-group">
+
+<label>Ratings</label>
+
+<label>
+<input type="radio" name="rating" value="4_plus"> 4★ & above
+</label>
+
+<label>
+<input type="radio" name="rating" value="3_plus"> 3★ & above
+</label>
+
+<label>
+<input type="radio" name="rating" value="all" checked> All Ratings
+</label>
+
+</div>
+
+<button type="submit" class="filter-btn">
+Apply Filters
+</button>
+
+</form>
+
+</div>
+
+<!-- ================= PRODUCTS AREA ================= -->
+
+<div class="products-area">
+
+{% if products %}
+
+<form id="compare-form" action="{{ url_for('compare') }}" method="post">
+
+<div class="compare-section">
+
+<button type="submit" id="compare-btn" disabled>
+Compare Products
+</button>
+
+<span id="selection-count">
+0 selected (max 3)
+</span>
+
+</div>
+
+<main class="product-grid">
+
+{% for product in products %}
+
+<div class="product-card">
+
+<input type="checkbox"
+name="compare"
+value="{{ product.id }}"
+class="compare-checkbox">
+
+<a href="{{ url_for('product_details', product_id=product.id) }}"
+class="product-link">
+
+<img src="{{ product.image_url }}" alt="{{ product.name }}">
+
+<h3>{{ product.name }}</h3>
+
+</a>
+
+<p class="vendor">{{ product.vendor }}</p>
+
+<div class="price-rating">
+
+<span class="price">₹{{ product.price }}</span>
+
+<span class="rating">⭐ {{ product.rating }}</span>
+
+</div>
+
+<a href="{{ url_for('add_to_wishlist', product_id=product.id) }}"
+class="btn-wishlist">♡</a>
+
+<a href="{{ product.product_url }}"
+target="_blank"
+rel="noopener"
+class="btn-view">View</a>
+
+</div>
+
+{% endfor %}
+
+</main>
+
+</form>
+
+{% else %}
+
+<div class="empty-state">
+
+<div class="empty-state-icon">🔍</div>
+
+<h2>No products found</h2>
+
+<p>Try searching with different keywords</p>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</div>
+
+<script>
+
+document.addEventListener('DOMContentLoaded',function(){
+
+const checkboxes=document.querySelectorAll('.compare-checkbox');
+const compareBtn=document.getElementById('compare-btn');
+const selectionCount=document.getElementById('selection-count');
+
+function updateSelection(){
+
+const checked=document.querySelectorAll('.compare-checkbox:checked');
+const count=checked.length;
+
+selectionCount.textContent=`${count} selected (max 3)`;
+compareBtn.disabled=count===0||count>3;
+
+}
+
+checkboxes.forEach(checkbox=>{
+
+checkbox.addEventListener('change',function(){
+
+const checked=document.querySelectorAll('.compare-checkbox:checked');
+
+if(checked.length>3){
+this.checked=false;
+alert('You can select maximum 3 products to compare.');
+}
+
+updateSelection();
+
+});
+
+});
+
+updateSelection();
+
+});
+
+</script>
+
 </body>
 </html>
