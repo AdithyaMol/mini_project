@@ -181,7 +181,7 @@ def create_app():
             selected_platform=selected_platform
         )
 
-    # ================= COMPARE =================
+    # ================= COMPARE (FIXED) =================
 
     @app.route("/compare",methods=["POST"])
     @login_required
@@ -193,17 +193,46 @@ def create_app():
             flash("Select 1-3 products to compare.","error")
             return redirect(request.referrer or url_for("home"))
 
+        # Convert IDs to int
+        product_ids = list(map(int, product_ids))
+
         products=Product.query.filter(Product.id.in_(product_ids)).all()
 
+        if not products:
+            flash("No products found for comparison.","error")
+            return redirect(url_for("home"))
+
+        # Best price & rating
         lowest_price_product=min(products,key=lambda p:p.price)
         highest_rating_product=max(products,key=lambda p:p.rating or 0)
+
+        # Price differences
+        base_price = lowest_price_product.price
+        price_differences = {}
+        for p in products:
+            price_differences[p.id] = int(p.price - base_price)
+
+        # Score calculation
+        scores = {}
+        for p in products:
+            rating = p.rating or 0
+            score = round((rating * 2) - (p.price / 10000), 2)
+            scores[p.id] = score
+
+        highest_score = max(scores.values())
+
+        # Recommended product
+        recommended_product = max(products, key=lambda p: scores[p.id])
 
         return render_template(
             "compare.html",
             products=products,
             lowest_price=lowest_price_product.price,
             highest_rating=highest_rating_product.rating,
-            recommended_product=lowest_price_product
+            price_differences=price_differences,
+            scores=scores,
+            highest_score=highest_score,
+            recommended_product=recommended_product
         )
 
     # ================= PRODUCT DETAILS =================
