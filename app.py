@@ -78,21 +78,23 @@ def create_app():
     @login_required
     def home():
 
-        recently_viewed=[]
+        recently_viewed = []
 
-        if 'recently_viewed' in session:
-            product_ids=session['recently_viewed']
-            recently_viewed=Product.query.filter(Product.id.in_(product_ids)).all()
-            recently_viewed.sort(key=lambda p:product_ids.index(p.id))
+        product_ids = session.get('recently_viewed', [])
 
-        categories=db.session.query(Product.category).distinct().all()
-        categories=[c[0] for c in categories if c[0]]
+        if product_ids:
+            recently_viewed = Product.query.filter(Product.id.in_(product_ids)).all()
+            # Maintain order
+            recently_viewed.sort(key=lambda p: product_ids.index(p.id))
 
-        selected_category=request.args.get("category")
+        categories = db.session.query(Product.category).distinct().all()
+        categories = [c[0] for c in categories if c[0]]
 
-        products=[]
+        selected_category = request.args.get("category")
+
+        products = []
         if selected_category:
-            products=Product.query.filter_by(category=selected_category).limit(20).all()
+            products = Product.query.filter_by(category=selected_category).limit(20).all()
 
         return render_template(
             "index.html",
@@ -108,23 +110,17 @@ def create_app():
     @login_required
     def search():
 
-        query=request.args.get("q","").strip()
-        sort_by=request.args.get("sort","price_asc")
-        rating_filter=request.args.get("rating","all")
-        selected_brand=request.args.get("brand")
-        selected_platform=request.args.get("platform")
+        query = request.args.get("q","").strip()
+        sort_by = request.args.get("sort","price_asc")
+        rating_filter = request.args.get("rating","all")
+        selected_brand = request.args.get("brand")
+        selected_platform = request.args.get("platform")
 
-        min_price=request.args.get("min_price")
-        max_price=request.args.get("max_price")
+        min_price = request.args.get("min_price")
+        max_price = request.args.get("max_price")
 
         if not query:
-            return render_template(
-                "results.html",
-                products=[],
-                query=query,
-                brands=[],
-                platforms=[]
-            )
+            return render_template("results.html", products=[], query=query, brands=[], platforms=[])
 
         products_query = Product.query.filter(
             or_(
@@ -135,39 +131,36 @@ def create_app():
         )
 
         if selected_brand:
-            products_query=products_query.filter(Product.brand==selected_brand)
+            products_query = products_query.filter(Product.brand == selected_brand)
 
         if selected_platform:
-            products_query=products_query.filter(Product.vendor==selected_platform)
+            products_query = products_query.filter(Product.vendor == selected_platform)
 
         if min_price:
-            products_query=products_query.filter(Product.price>=float(min_price))
+            products_query = products_query.filter(Product.price >= float(min_price))
 
         if max_price:
-            products_query=products_query.filter(Product.price<=float(max_price))
+            products_query = products_query.filter(Product.price <= float(max_price))
 
-        if rating_filter=="4_plus":
-            products_query=products_query.filter(Product.rating>=4)
+        if rating_filter == "4_plus":
+            products_query = products_query.filter(Product.rating >= 4)
+        elif rating_filter == "3_plus":
+            products_query = products_query.filter(Product.rating >= 3)
 
-        elif rating_filter=="3_plus":
-            products_query=products_query.filter(Product.rating>=3)
+        if sort_by == "price_asc":
+            products_query = products_query.order_by(Product.price.asc())
+        elif sort_by == "price_desc":
+            products_query = products_query.order_by(Product.price.desc())
+        elif sort_by == "rating_desc":
+            products_query = products_query.order_by(Product.rating.desc())
 
-        if sort_by=="price_asc":
-            products_query=products_query.order_by(Product.price.asc())
-
-        elif sort_by=="price_desc":
-            products_query=products_query.order_by(Product.price.desc())
-
-        elif sort_by=="rating_desc":
-            products_query=products_query.order_by(Product.rating.desc())
-
-        products=products_query.limit(50).all()
+        products = products_query.limit(50).all()
 
         if not products:
             flash("No products found.","info")
 
-        brands=sorted(list(set([p.brand for p in products if p.brand])))
-        platforms=sorted(list(set([p.vendor for p in products if p.vendor])))
+        brands = sorted(list(set([p.brand for p in products if p.brand])))
+        platforms = sorted(list(set([p.vendor for p in products if p.vendor])))
 
         return render_template(
             "results.html",
@@ -181,47 +174,38 @@ def create_app():
             selected_platform=selected_platform
         )
 
-    # ================= COMPARE (FIXED) =================
+    # ================= COMPARE =================
 
     @app.route("/compare",methods=["POST"])
     @login_required
     def compare():
 
-        product_ids=request.form.getlist("compare")
+        product_ids = request.form.getlist("compare")
 
-        if len(product_ids)<1 or len(product_ids)>3:
+        if len(product_ids) < 1 or len(product_ids) > 3:
             flash("Select 1-3 products to compare.","error")
             return redirect(request.referrer or url_for("home"))
 
-        # Convert IDs to int
         product_ids = list(map(int, product_ids))
 
-        products=Product.query.filter(Product.id.in_(product_ids)).all()
+        products = Product.query.filter(Product.id.in_(product_ids)).all()
 
         if not products:
             flash("No products found for comparison.","error")
             return redirect(url_for("home"))
 
-        # Best price & rating
-        lowest_price_product=min(products,key=lambda p:p.price)
-        highest_rating_product=max(products,key=lambda p:p.rating or 0)
+        lowest_price_product = min(products, key=lambda p: p.price)
+        highest_rating_product = max(products, key=lambda p: p.rating or 0)
 
-        # Price differences
         base_price = lowest_price_product.price
-        price_differences = {}
-        for p in products:
-            price_differences[p.id] = int(p.price - base_price)
+        price_differences = {p.id: int(p.price - base_price) for p in products}
 
-        # Score calculation
         scores = {}
         for p in products:
             rating = p.rating or 0
-            score = round((rating * 2) - (p.price / 10000), 2)
-            scores[p.id] = score
+            scores[p.id] = round((rating * 2) - (p.price / 10000), 2)
 
         highest_score = max(scores.values())
-
-        # Recommended product
         recommended_product = max(products, key=lambda p: scores[p.id])
 
         return render_template(
@@ -241,18 +225,40 @@ def create_app():
     @login_required
     def product_details(product_id):
 
-        product=Product.query.get_or_404(product_id)
+        product = Product.query.get_or_404(product_id)
 
+        # Initialize session
         if 'recently_viewed' not in session:
-            session['recently_viewed']=[]
+            session['recently_viewed'] = []
 
+        # Remove if already exists
         if product_id in session['recently_viewed']:
             session['recently_viewed'].remove(product_id)
 
-        session['recently_viewed'].insert(0,product_id)
-        session['recently_viewed']=session['recently_viewed'][:5]
+        # Add to front
+        session['recently_viewed'].insert(0, product_id)
 
-        return render_template("product_details.html",product=product)
+        # Limit to last 5
+        session['recently_viewed'] = session['recently_viewed'][:5]
+
+        session.modified = True
+
+        return render_template("product_details.html", product=product)
+
+    # ================= NEW: RECENTLY VIEWED PAGE =================
+
+    @app.route("/recently-viewed")
+    @login_required
+    def recently_viewed_page():
+
+        product_ids = session.get('recently_viewed', [])
+
+        products = []
+        if product_ids:
+            products = Product.query.filter(Product.id.in_(product_ids)).all()
+            products.sort(key=lambda p: product_ids.index(p.id))
+
+        return render_template("recently_viewed.html", products=products)
 
     # ================= WISHLIST =================
 
@@ -260,13 +266,13 @@ def create_app():
     @login_required
     def add_to_wishlist(product_id):
 
-        existing=Wishlist.query.filter_by(
+        existing = Wishlist.query.filter_by(
             user_id=current_user.id,
             product_id=product_id
         ).first()
 
         if not existing:
-            item=Wishlist(user_id=current_user.id,product_id=product_id)
+            item = Wishlist(user_id=current_user.id, product_id=product_id)
             db.session.add(item)
             db.session.commit()
             flash("Added to wishlist!","success")
@@ -277,14 +283,14 @@ def create_app():
     @login_required
     def wishlist():
 
-        items=Wishlist.query.filter_by(user_id=current_user.id).all()
-        return render_template("wishlist.html",items=items)
+        items = Wishlist.query.filter_by(user_id=current_user.id).all()
+        return render_template("wishlist.html", items=items)
 
     @app.route("/wishlist/remove/<int:item_id>")
     @login_required
     def remove_from_wishlist(item_id):
 
-        item=Wishlist.query.filter_by(id=item_id,user_id=current_user.id).first_or_404()
+        item = Wishlist.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
 
         db.session.delete(item)
         db.session.commit()
@@ -309,13 +315,13 @@ def create_app():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))  # FIXED warning
 
 
-app=create_app()
+app = create_app()
 
 with app.app_context():
     db.create_all()
 
-if __name__=="__main__":
+if __name__ == "__main__":
     app.run(debug=True)
