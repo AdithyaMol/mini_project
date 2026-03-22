@@ -96,12 +96,22 @@ def create_app():
         if selected_category:
             products = Product.query.filter_by(category=selected_category).limit(20).all()
 
+        # ================= BADGE COUNTS =================
+        wishlist_count = 0
+        if current_user.is_authenticated:
+            wishlist_count = Wishlist.query.filter_by(user_id=current_user.id).count()
+
+        compare_list = session.get('compare', [])
+        compare_count = len(compare_list)
+
         return render_template(
             "index.html",
             recently_viewed=recently_viewed,
             categories=categories,
             products=products,
-            selected_category=selected_category
+            selected_category=selected_category,
+            wishlist_count=wishlist_count,
+            compare_count=compare_count
         )
 
     # ================= SEARCH =================
@@ -176,22 +186,38 @@ def create_app():
 
     # ================= COMPARE =================
 
-    @app.route("/compare",methods=["POST"])
+    @app.route("/compare", methods=["GET", "POST"])
     @login_required
     def compare():
 
-        product_ids = request.form.getlist("compare")
+    # ================= GET (NAVBAR CLICK) =================
+        if request.method == "GET":
+            product_ids = session.get("compare", [])
 
-        if len(product_ids) < 1 or len(product_ids) > 3:
-            flash("Select 1-3 products to compare.","error")
-            return redirect(request.referrer or url_for("home"))
+            if not product_ids:
+                flash("No products selected for comparison.", "info")
+                return redirect(url_for("home"))
 
-        product_ids = list(map(int, product_ids))
+            product_ids = list(map(int, product_ids))
 
+
+    # ================= POST (FORM SUBMIT) =================
+        else:
+            product_ids = request.form.getlist("compare")
+            session['compare'] = product_ids
+
+            if len(product_ids) < 1 or len(product_ids) > 3:
+                flash("Select 1-3 products to compare.", "error")
+                return redirect(request.referrer or url_for("home"))
+
+            product_ids = list(map(int, product_ids))
+
+
+    # ================= COMMON LOGIC =================
         products = Product.query.filter(Product.id.in_(product_ids)).all()
 
         if not products:
-            flash("No products found for comparison.","error")
+            flash("No products found for comparison.", "error")
             return redirect(url_for("home"))
 
         lowest_price_product = min(products, key=lambda p: p.price)
@@ -218,6 +244,46 @@ def create_app():
             highest_score=highest_score,
             recommended_product=recommended_product
         )
+    @app.route("/add_to_compare/<int:product_id>")
+    @login_required
+    def add_to_compare(product_id):
+
+        compare_list = session.get("compare", [])
+
+    # Convert to string for consistency
+        compare_list = [str(pid) for pid in compare_list]
+
+        if str(product_id) in compare_list:
+            flash("Already added to comparison", "info")
+        else:
+            if len(compare_list) >= 3:
+                flash("You can compare up to 3 products only", "error")
+            else:
+                compare_list.append(str(product_id))
+                session['compare'] = compare_list
+                session.modified = True
+                flash("Added for comparison", "success")
+
+        return redirect(request.referrer or url_for("home"))
+    @app.route("/compare/remove/<int:product_id>")
+    @login_required
+    def remove_from_compare(product_id):
+
+        compare_list = session.get("compare", [])
+
+    # Convert to string (since session stores strings)
+        compare_list = [str(pid) for pid in compare_list]
+
+        if str(product_id) in compare_list:
+            compare_list.remove(str(product_id))
+            session['compare'] = compare_list
+            session.modified = True
+
+        if not compare_list:
+            flash("No products left to compare.", "info")
+            return redirect(url_for("home"))
+
+        return redirect(url_for("compare"))
 
     # ================= PRODUCT DETAILS =================
 
