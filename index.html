@@ -16,10 +16,25 @@
     <div class="logo">PriceComp</div>
 
     <nav class="nav-links">
-        <a href="{{ url_for('compare') }}">Compare</a>
+        
+        <a href="{{ url_for('compare') }}" class="nav-item">
+            Compare
+            {% if compare_count > 0 %}
+            <span class="badge">{{ compare_count }}</span>
+            {% endif %}
+        </a>
+
         <a href="{{ url_for('recently_viewed_page') }}">Recently Viewed</a>
-        <a href="{{ url_for('wishlist') }}">Wishlist</a>
+
+        <a href="{{ url_for('wishlist') }}" class="nav-item">
+            Wishlist
+            {% if wishlist_count > 0 %}
+            <span class="badge">{{ wishlist_count }}</span>
+            {% endif %}
+        </a>
+
         <a href="{{ url_for('logout') }}">Logout</a>
+
     </nav>
 </header>
 
