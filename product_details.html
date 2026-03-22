@@ -25,7 +25,6 @@
 
 <div class="product-details-container">
 
-```
 <div class="product-details-grid">
 
     <!-- PRODUCT IMAGE -->
@@ -62,15 +61,15 @@
                 ♡ Add to Wishlist
             </a>
 
-            <a href="{{ url_for('home') }}" class="btn-secondary">
-                Compare More Products
+            <a href="{{ url_for('add_to_compare', product_id=product.id) }}" class="btn-secondary">
+                Add to Compare
             </a>
         </div>
 
     </div>
 
 </div>
-```
+
 
 </div>
 
