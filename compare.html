@@ -187,7 +187,14 @@
         <tr>
             <th>Feature</th>
             {% for product in products %}
-            <th>{{ product.vendor }}</th>
+            <th>
+                {{ product.vendor }}
+                <br>
+                <a href="{{ url_for('remove_from_compare', product_id=product.id) }}" 
+                    class="remove-btn">
+                    ❌ Remove
+                </a>
+            </th>
             {% endfor %}
         </tr>
     </thead>
