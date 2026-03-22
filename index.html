@@ -1,36 +1,53 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>PriceComp - Find the Best Deals</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<meta charset="UTF-8">
+<title>PriceComp - Find the Best Deals</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
 </head>
+
 <body>
 
+<!-- ================= NAVBAR ================= -->
 <header class="navbar">
     <div class="logo">PriceComp</div>
+
     <nav class="nav-links">
+        <a href="{{ url_for('compare') }}">Compare</a>
+        <a href="{{ url_for('recently_viewed_page') }}">Recently Viewed</a>
         <a href="{{ url_for('wishlist') }}">Wishlist</a>
         <a href="{{ url_for('logout') }}">Logout</a>
     </nav>
 </header>
 
+<!-- 🔥 TOAST NOTIFICATIONS -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="toast-container">
+      {% for category, message in messages %}
+        <div class="toast {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 <main class="home-container">
 
-```
-<!-- SEARCH BOX -->
+<!-- ================= SEARCH ================= -->
 <div class="search-box">
-    <h1 style="color: white; margin: 0 0 20px 0; font-size: 32px; font-weight: 700;">Find the Best Deals</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 0 0 25px 0; font-size: 16px;">Compare prices across Amazon, Flipkart, and more</p>
+    <h1 style="color:white;">Find the Best Deals</h1>
     <form action="{{ url_for('search') }}" method="get">
         <input type="text" name="q" placeholder="Search products..." required>
         <button type="submit" class="btn-primary">Search</button>
     </form>
 </div>
 
-<!-- ⭐ CATEGORIES SECTION -->
+<!-- ================= CATEGORIES ================= -->
 {% if categories %}
 <div class="categories-section">
     <h2>Browse Categories</h2>
@@ -45,60 +62,71 @@
 </div>
 {% endif %}
 
-
-<!-- ⭐ PRODUCTS FROM SELECTED CATEGORY -->
+<!-- ================= CATEGORY PRODUCTS ================= -->
 {% if products %}
 <div class="recent-products-section">
     <h2>{{ selected_category }} Products</h2>
 
     <div class="product-grid">
         {% for product in products %}
-        <div class="product-card product-card-small">
-            <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
-                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+        <div class="product-card">
+
+            <input type="checkbox" name="compare" value="{{ product.id }}" class="compare-checkbox">
+
+            <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn-wishlist">♥</a>
+
+            <a href="{{ url_for('product_details', product_id=product.id) }}">
+                <img src="{{ product.image_url }}">
                 <h3>{{ product.name }}</h3>
             </a>
 
-            <p class="vendor">{{ product.vendor }}</p>
-
             <div class="price-rating">
                 <span class="price">₹{{ product.price }}</span>
-                <span class="rating">⭐ {{ product.rating }}</span>
+                <span class="rating">⭐ {{ product.rating or 'N/A' }}</span>
             </div>
+
         </div>
         {% endfor %}
     </div>
 </div>
 {% endif %}
 
-
-<!-- ⭐ RECENTLY VIEWED PRODUCTS -->
+<!-- ================= RECENTLY VIEWED ================= -->
 {% if recently_viewed %}
 <div class="recent-products-section">
-    <h2>Recently Viewed Products</h2>
+    <h2>Recently Viewed</h2>
 
     <div class="product-grid">
         {% for product in recently_viewed %}
         <div class="product-card product-card-small">
+
             <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-link">
-                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <img src="{{ product.image_url }}">
                 <h3>{{ product.name }}</h3>
             </a>
 
-            <p class="vendor">{{ product.vendor }}</p>
-
             <div class="price-rating">
                 <span class="price">₹{{ product.price }}</span>
-                <span class="rating">⭐ {{ product.rating }}</span>
+                <span class="rating">⭐ {{ product.rating or 'N/A' }}</span>
             </div>
+
         </div>
         {% endfor %}
     </div>
 </div>
 {% endif %}
-```
 
 </main>
+
+<!-- 🔥 AUTO DISMISS SCRIPT -->
+<script>
+setTimeout(() => {
+    const toasts = document.querySelectorAll(".toast");
+    toasts.forEach(toast => {
+        toast.style.animation = "fadeOut 0.5s forwards";
+    });
+}, 3000);
+</script>
 
 </body>
 </html>
