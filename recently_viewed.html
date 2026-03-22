@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Recently Viewed - PriceComp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+/* ================= THEME ================= */
+:root {
+    --primary: #7c3aed;
+    --primary-dark: #6d28d9;
+    --nykaa-pink: #fc2779;
+    --bg-light: #f8f9fc;
+    --text-dark: #1a202c;
+    --text-muted: #718096;
+    --shadow-light: rgba(0, 0, 0, 0.08);
+    --shadow-md: rgba(0, 0, 0, 0.12);
+    --border-color: #e2e8f0;
+}
+
+/* ================= GLOBAL ================= */
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+    background: var(--bg-light);
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ================= NAVBAR ================= */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 60px;
+    background: linear-gradient(135deg, #fff 0%, #fafbfd 100%);
+    box-shadow: 0 4px 20px var(--shadow-light);
+}
+
+.logo {
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--nykaa-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-links a {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    color: var(--primary);
+}
+
+/* ================= PAGE HEADER ================= */
+.page-header {
+    text-align: center;
+    padding: 40px 20px 10px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: var(--text-dark);
+}
+
+.page-header p {
+    color: var(--text-muted);
+}
+
+/* ================= PRODUCT GRID ================= */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    padding: 30px 60px;
+}
+
+.product-card {
+    background: white;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px var(--shadow-light);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 25px var(--shadow-md);
+    border-color: var(--primary);
+}
+
+.product-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+.product-card h3 {
+    font-size: 15px;
+    margin: 10px 0 5px;
+    height: 40px;
+    overflow: hidden;
+}
+
+.vendor {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.price-rating {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.rating {
+    color: #f59e0b;
+    font-size: 14px;
+}
+
+/* ================= EMPTY STATE ================= */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.empty-state h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.empty-state a {
+    display: inline-block;
+    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    border-radius: 10px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .product-grid {
+        padding: 20px;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .navbar {
+        padding: 15px 20px;
+    }
+}
+
+</style>
+
+</head>
+<body>
+
+<header class="navbar">
+    <div class="logo">PriceComp</div>
+    <nav class="nav-links">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('compare') }}">Compare</a>
+        <a href="{{ url_for('wishlist') }}">Wishlist</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+</header>
+
+<div class="page-header">
+    <h1>Recently Viewed Products</h1>
+    <p>Your recently explored items</p>
+</div>
+
+{% if products %}
+<div class="product-grid">
+
+    {% for product in products %}
+    <div class="product-card">
+        <a href="{{ url_for('product_details', product_id=product.id) }}">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            <h3>{{ product.name }}</h3>
+        </a>
+
+        <p class="vendor">{{ product.vendor }}</p>
+
+        <div class="price-rating">
+            <span class="price">₹{{ product.price }}</span>
+            <span class="rating">⭐ {{ product.rating }}</span>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% else %}
+<div class="empty-state">
+    <h2>No Recently Viewed Products</h2>
+    <p>Start browsing products to see them here.</p>
+    <a href="{{ url_for('home') }}">Go to Home</a>
+</div>
+{% endif %}
+
+</body>
+</html>
